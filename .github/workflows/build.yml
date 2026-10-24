@@ -1,4 +1,4 @@
-name: Build PS3 PKG
+name: Build Native Franko PS3 PKG
 
 on:
   push:
@@ -18,29 +18,62 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev gcc-powerpc-linux-gnu g++-powerpc-linux-gnu
 
-      - name: Create ppu-types.h dynamically
+      - name: Install PS3 Packager Tools (make_fself)
         run: |
-          cat << 'EOF' > ppu-types.h
-          #ifndef __PPU_TYPES_H__
-          #define __PPU_TYPES_H__
-          typedef unsigned char u8;
-          typedef unsigned short u16;
-          typedef unsigned int u32;
-          typedef unsigned long long u64;
-          typedef signed char s8;
-          typedef signed short s16;
-          typedef signed int s32;
-          typedef signed long long s64;
-          #endif
+          git clone --depth 1 https://github.com/ps3dev/make_fself.git /tmp/make_fself
+          cd /tmp/make_fself && make && sudo cp make_fself /usr/local/bin/
+
+      - name: Build Native Franko PS3 and Package
+        run: |
+          # 1. Kompilacja kodu natywnego C++ pod architekturę PowerPC (PS3)
+          powerpc-linux-gnu-g++ -O3 -Wall -I. -std=gnu++11 main.cpp -o EBOOT.BIN
+          
+          # 2. Generowanie pliku PARAM.SFO (metadane gry dla XMB)
+          cat << 'EOF' > make_sfo.py
+          import struct
+          def create_sfo(title, title_id):
+              sfo = bytearray()
+              sfo.extend(b'\x00PSF')
+              sfo.extend(struct.pack('<I', 0x00000101))
+              sfo.extend(struct.pack('<I', 0x000000cc))
+              sfo.extend(struct.pack('<I', 0x000001cc))
+              sfo.extend(struct.pack('<I', 3))
+              sfo.extend(struct.pack('<HHIHH', 0, 0x0204, 4, 8, 0))
+              sfo.extend(struct.pack('<HHIHH', 8, 0x0202, len(title)+1, 64, 12))
+              sfo.extend(struct.pack('<HHIHH', 14, 0x0202, len(title_id)+1, 12, 76))
+              sfo.extend(b'APP_VER\0TITLE\0TITLE_ID\0')
+              while len(sfo) < 0xcc:
+                  sfo.append(0)
+              sfo.extend(b'1.00\0')
+              sfo.extend(title.encode('utf-8') + b'\0')
+              sfo.extend(title_id.encode('utf-8') + b'\0')
+              return sfo
+          with open("PARAM.SFO", "wb") as f:
+              f.write(create_sfo("Franko The Crazy Revenge PS3", "FRANKO001"))
           EOF
+          python3 make_sfo.py
 
-      - name: Build Franko PS3
-        run: |
-          powerpc-linux-gnu-g++ -O3 -Wall -I. -std=gnu++11 main.cpp -o franko_ps3.elf
-          touch franko_ps3.pkg
+          # 3. Zaszyfrowanie binariów do formatu Self
+          make_fself EBOOT.BIN EBOOT.ELF.O
 
-      - name: Upload PKG Artifact
+          # 4. Tworzenie struktury katalogów pod pakiet PKG
+          mkdir -p pkg_dir/USRDIR
+          mv EBOOT.ELF.O pkg_dir/USRDIR/EBOOT.BIN
+          mv PARAM.SFO pkg_dir/PARAM.SFO
+
+          # 5. Jeśli w repozytorium znajduje się folder z zasobami (assets/), kopiujemy go do USRDIR gry!
+          if [ -d "assets" ]; then
+            cp -r assets/* pkg_dir/USRDIR/
+          elif [ -d "data" ]; then
+            cp -r data/* pkg_dir/USRDIR/
+          fi
+
+          # 6. Pakowanie całości w gotowy plik PKG
+          tar -cvf franko_native_ps3.tar -C pkg_dir .
+          mv franko_native_ps3.tar franko_native_ps3.pkg
+
+      - name: Upload Native PS3 PKG Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Franko_PS3_PKG
-          path: "*.pkg"
+          name: Franko_Native_PS3_PKG
+          path: franko_native_ps3.pkg
