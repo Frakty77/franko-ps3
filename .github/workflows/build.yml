@@ -13,14 +13,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build PKG
         run: |
           make
 
       - name: Upload PKG Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Franko_PS3_PKG
           path: "*.pkg"
