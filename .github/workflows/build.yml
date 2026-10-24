@@ -8,41 +8,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    container: ps3dev/sdk:latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev gcc-powerpc-linux-gnu g++-powerpc-linux-gnu
-
-          # Tworzenie dowiązań, aby nazwy ppu-gcc wskazywały na powerpc-linux-gnu-gcc
-          sudo ln -s /usr/bin/powerpc-linux-gnu-gcc /usr/local/bin/ppu-gcc
-          sudo ln -s /usr/bin/powerpc-linux-gnu-g++ /usr/local/bin/ppu-g++
-          sudo ln -s /usr/bin/powerpc-linux-gnu-ar /usr/local/bin/ppu-ar
-          sudo ln -s /usr/bin/powerpc-linux-gnu-ld /usr/local/bin/ppu-ld
-          sudo ln -s /usr/bin/powerpc-linux-gnu-objcopy /usr/local/bin/ppu-objcopy
-          sudo ln -s /usr/bin/powerpc-linux-gnu-strip /usr/local/bin/ppu-strip
-
-          sudo mkdir -p /usr/local/ps3dev
-          sudo chmod 777 /usr/local/ps3dev
-          
-          # Pobranie, ustawienie zmiennych, kompilacja i instalacja PSL1GHT
-          git clone --depth 1 https://github.com/ps3dev/psl1ght.git /usr/local/ps3dev/psl1ght
-          cd /usr/local/ps3dev/psl1ght
-          export PS3DEV=/usr/local/ps3dev
-          export PSL1GHT=/usr/local/ps3dev/psl1ght
-          export PATH=$PATH:$PS3DEV/bin:/usr/local/bin
-          make
-          make install
-
       - name: Build Franko PS3
         run: |
           export PS3DEV=/usr/local/ps3dev
           export PSL1GHT=$PS3DEV/psl1ght
-          export PATH=$PATH:$PS3DEV/bin:/usr/local/bin
+          export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
           
           make
 
