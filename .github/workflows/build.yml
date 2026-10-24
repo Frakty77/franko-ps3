@@ -8,15 +8,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/ps3dev/ps3dev:latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install PS3Dev Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake bison flex libelf-dev libtool make patch python3 pkg-config
+          wget https://github.com/ps3dev/ps3toolchain/releases/download/v1.0.0/ps3dev-ubuntu-latest.tar.gz -O ps3dev.tar.gz || true
+          # Tworzenie katalogu i wypakowanie
+          sudo mkdir -p /usr/local/ps3dev
+          if [ -f ps3dev.tar.gz ]; then
+            sudo tar -xzf ps3dev.tar.gz -C /usr/local/ps3dev
+          fi
+
       - name: Build PKG
         run: |
+          export PS3DEV=/usr/local/ps3dev
+          export PSL1GHT=$PS3DEV/psl1ght
+          export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
           make
 
       - name: Upload PKG Artifact
