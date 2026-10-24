@@ -7,22 +7,18 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PS3Dev
-        uses: ps3dev/setup-ps3dev@v1
+      - name: Setup PS3Dev Environment
+        uses: ps3dev/ps3dev-action@v1.0
 
       - name: Build PKG
         run: |
           make
-        env:
-          PS3DEV: /usr/local/ps3dev
-          PSL1GHT: /usr/local/ps3dev/psl1ght
-          PATH: /usr/local/ps3dev/bin:/usr/local/ps3dev/ppu/bin:/usr/local/ps3dev/spu/bin:${{ env.PATH }}
 
       - name: Upload PKG Artifact
         uses: actions/upload-artifact@v4
