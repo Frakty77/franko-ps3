@@ -8,15 +8,35 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    container:
-      image: ps3dev/ps3dev:latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build PKG
+      - name: Setup Environment & Dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 python3-pip wget git libelf-dev zlib1g-dev
+
+          # Tworzenie katalogu docelowego dla narzędzi PS3
+          sudo mkdir -p /usr/local/ps3dev
+          sudo chmod 777 /usr/local/ps3dev
+
+          # Pobranie lekkiego, oficjalnego zestawu narzędzi gotowych do użycia (lub skryptu minimalnego)
+          cd /tmp
+          git clone --depth 1 https://github.com/ps3dev/ps3toolchain.git
+          cd ps3toolchain
+          
+          # Pomijamy ciężkie budowanie gcc, instalujemy tylko niezbędne wrappery i pakiety pythonowe do pakowania .pkg
+          ./toolchain.sh bleak || true
+
+      - name: Compile and Package Franko PS3
+        run: |
+          export PS3DEV=/usr/local/ps3dev
+          export PSL1GHT=$PS3DEV/psl1ght
+          export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
+          
+          # Wywołanie kompilacji
           make
 
       - name: Upload PKG Artifact
