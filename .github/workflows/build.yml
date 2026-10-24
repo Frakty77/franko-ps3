@@ -21,15 +21,26 @@ jobs:
           sudo mkdir -p /usr/local/ps3dev
           sudo chmod 777 /usr/local/ps3dev
 
-      - name: Setup PSL1GHT
+      - name: Setup and Install PSL1GHT
         run: |
           git clone --depth 1 https://github.com/ps3dev/psl1ght.git /usr/local/ps3dev/psl1ght
+          cd /usr/local/ps3dev/psl1ght
+          export PS3DEV=/usr/local/ps3dev
+          export PSL1GHT=/usr/local/ps3dev/psl1ght
+          # Tworzenie dowiązań dla kompilatora, żeby PSL1GHT znalazł ppu-gcc
+          sudo ln -sf /usr/bin/powerpc-linux-gnu-gcc /usr/local/bin/ppu-gcc
+          sudo ln -sf /usr/bin/powerpc-linux-gnu-g++ /usr/local/bin/ppu-g++
+          sudo ln -sf /usr/bin/powerpc-linux-gnu-ar /usr/local/bin/ppu-ar
+          sudo ln -sf /usr/bin/powerpc-linux-gnu-ld /usr/local/bin/ppu-ld
+          export PATH=$PATH:/usr/local/bin
+          make
+          make install
 
       - name: Build Franko PS3
         run: |
           export PS3DEV=/usr/local/ps3dev
           export PSL1GHT=$PS3DEV/psl1ght
-          export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
+          export PATH=$PATH:$PS3DEV/bin:/usr/local/bin
           
           make
 
