@@ -13,28 +13,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Essential Build Tools & Python Packages
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 python3-pip wget git libelf-dev zlib1g-dev libgmp-dev libmpfr-dev libmpc-dev
+          sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev
 
-          # Instalacja narzędzia do pakowania PKG (np. pkg.py / pythonowe wsparcie)
-          pip3 install --upgrade pip
-
-      - name: Download Precompiled PS3DEV Toolchain Core
+      - name: Setup Precompiled PS3DEV Toolchain
         run: |
-          # Tworzymy struktury katalogów i pobieramy gotowe, lekkie wrappery kompilatora dla PSL1GHT
           sudo mkdir -p /usr/local/ps3dev
           sudo chmod 777 /usr/local/ps3dev
-          
-          cd /tmp
-          git clone --depth 1 https://github.com/ps3dev/psl1ght.git /usr/local/ps3dev/psl1ght
 
-      - name: Build PKG
+          # Pobieramy najpopularniejszy, gotowy zestaw spakowanych narzędzi PS3Dev z mirrora społeczności
+          cd /tmp
+          wget -q https://github.com/ps3dev/ps3toolchain/releases/download/v1.0.0/ps3dev-ubuntu-latest.tar.gz -O ps3dev.tar.gz || true
+          
+          if [ -f ps3dev.tar.gz ] && [ -s ps3dev.tar.gz ]; then
+            tar -xzf ps3dev.tar.gz -C /usr/local/ps3dev
+          else
+            echo "Pobieranie alternatywne gotowego zestawu..."
+            git clone --depth 1 https://github.com/ps3dev/ps3toolchain.git /tmp/ps3toolchain
+            # Klonujemy psl1ght i używamy minimalnego skryptu konfiguracyjnego bez budowania GCC
+            git clone --depth 1 https://github.com/ps3dev/psl1ght.git /usr/local/ps3dev/psl1ght
+          fi
+
+      - name: Build PKG with Make
         run: |
           export PS3DEV=/usr/local/ps3dev
           export PSL1GHT=$PS3DEV/psl1ght
           export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
+          
+          # Sprawdźmy co mamy w ścieżce
+          which powerpc-eabi-g++ || echo "Brak kompilatora PPU"
           
           make
 
