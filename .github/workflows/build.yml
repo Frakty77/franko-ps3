@@ -16,7 +16,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev gcc-powerpc-linux-gnu g++-powerpc-linux-gnu
+          sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev gcc-powerpc-linux-gnu g++-powerpc-linux-gnu libsdl2-dev
 
           sudo mkdir -p /usr/local/ps3dev
           sudo chmod 777 /usr/local/ps3dev
