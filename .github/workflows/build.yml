@@ -8,11 +8,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    container: ps3dev/sdk:latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install Dependencies & PS3 Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev autoconf automake libtool bison flex libssl-dev pkg-config
+
+          sudo mkdir -p /usr/local/ps3dev
+          sudo chmod 777 /usr/local/ps3dev
+
+          # Pobranie i oficjalna instalacja całego toolchaina ps3dev za pomocą wbudowanego skryptu
+          git clone https://github.com/ps3dev/ps3dev.git /tmp/ps3dev
+          cd /tmp/ps3dev
+          # Skrypt sam pobierze i skompiluje odpowiednie narzędzia dla PPU/SPU
+          ./toolchain.sh
 
       - name: Build Franko PS3
         run: |
