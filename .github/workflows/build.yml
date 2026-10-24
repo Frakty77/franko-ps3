@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: dborth/ps3dev:latest
+      image: ghcr.io/ps3dev/ps3dev:latest
 
     steps:
       - name: Checkout code
