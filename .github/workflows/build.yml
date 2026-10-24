@@ -16,12 +16,18 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev gcc-powerpc-linux-gnu g++-powerpc-linux-gnu libsdl2-dev
+          sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev gcc-powerpc-linux-gnu g++-powerpc-linux-gnu
 
           sudo mkdir -p /usr/local/ps3dev
           sudo chmod 777 /usr/local/ps3dev
           
+          # Pobranie, kompilacja i instalacja PSL1GHT
           git clone --depth 1 https://github.com/ps3dev/psl1ght.git /usr/local/ps3dev/psl1ght
+          cd /usr/local/ps3dev/psl1ght
+          export PS3DEV=/usr/local/ps3dev
+          export PATH=$PATH:$PS3DEV/bin
+          make
+          make install
 
       - name: Build Franko PS3
         run: |
