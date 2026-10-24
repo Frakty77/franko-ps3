@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <ppu-types.h>
+#include "ppu-types.h"
 #include <rsx/rsx.h>
 #include <io/pad.h>
 
