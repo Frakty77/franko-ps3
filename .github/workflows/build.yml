@@ -18,12 +18,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev gcc-powerpc-linux-gnu g++-powerpc-linux-gnu
 
+      - name: Create ppu-types.h dynamically
+        run: |
+          cat << 'EOF' > ppu-types.h
+          #ifndef __PPU_TYPES_H__
+          #define __PPU_TYPES_H__
+          typedef unsigned char u8;
+          typedef unsigned short u16;
+          typedef unsigned int u32;
+          typedef unsigned long long u64;
+          typedef signed char s8;
+          typedef signed short s16;
+          typedef signed int s32;
+          typedef signed long long s64;
+          #endif
+          EOF
+
       - name: Build Franko PS3
         run: |
-          # Kompilacja z uwzględnieniem bieżącego katalogu, gdzie jest nasz ppu-types.h
           powerpc-linux-gnu-g++ -O3 -Wall -I. -std=gnu++11 main.cpp -o franko_ps3.elf
-          
-          # Utworzenie pliku PKG jako artefaktu wynikowego
           touch franko_ps3.pkg
 
       - name: Upload PKG Artifact
