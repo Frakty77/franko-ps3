@@ -18,21 +18,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev gcc-powerpc-linux-gnu g++-powerpc-linux-gnu
 
-      - name: Download PSL1GHT Headers
-        run: |
-          sudo mkdir -p /usr/local/ps3dev/psl1ght/target/include
-          sudo mkdir -p /usr/local/ps3dev/psl1ght/target/lib
-          
-          git clone --depth 1 https://github.com/ps3dev/psl1ght.git /tmp/psl1ght_src
-          sudo cp -r /tmp/psl1ght_src/target/include/* /usr/local/ps3dev/psl1ght/target/include/ 2>/dev/null || true
-
       - name: Build Franko PS3
         run: |
-          export PS3DEV=/usr/local/ps3dev
-          export PSL1GHT=$PS3DEV/psl1ght
-          
-          # Poprawiona ścieżka do nagłówków z użyciem $PSL1GHT
-          powerpc-linux-gnu-g++ -O3 -Wall -I$PSL1GHT/target/include -std=gnu++11 main.cpp -o franko_ps3.elf
+          # Kompilacja z uwzględnieniem bieżącego katalogu, gdzie jest nasz ppu-types.h
+          powerpc-linux-gnu-g++ -O3 -Wall -I. -std=gnu++11 main.cpp -o franko_ps3.elf
           
           # Utworzenie pliku PKG jako artefaktu wynikowego
           touch franko_ps3.pkg
