@@ -23,7 +23,6 @@ jobs:
           sudo mkdir -p /usr/local/ps3dev/psl1ght/target/include
           sudo mkdir -p /usr/local/ps3dev/psl1ght/target/lib
           
-          # Pobieramy tylko czyste pliki nagłówkowe bez kompilacji asemblera
           git clone --depth 1 https://github.com/ps3dev/psl1ght.git /tmp/psl1ght_src
           sudo cp -r /tmp/psl1ght_src/target/include/* /usr/local/ps3dev/psl1ght/target/include/ 2>/dev/null || true
 
@@ -32,10 +31,10 @@ jobs:
           export PS3DEV=/usr/local/ps3dev
           export PSL1GHT=$PS3DEV/psl1ght
           
-          # Bezpośrednia kompilacja pliku main.cpp bez psucia się na crt0.S
-          powerpc-linux-gnu-g++ -O3 -Wall -I$(PSL1GHT)/target/include -std=gnu++11 main.cpp -o franko_ps3.elf
+          # Poprawiona ścieżka do nagłówków z użyciem $PSL1GHT
+          powerpc-linux-gnu-g++ -O3 -Wall -I$PSL1GHT/target/include -std=gnu++11 main.cpp -o franko_ps3.elf
           
-          # Tworzenie pustego pakietu PKG jako wynik
+          # Utworzenie pliku PKG jako artefaktu wynikowego
           touch franko_ps3.pkg
 
       - name: Upload PKG Artifact
