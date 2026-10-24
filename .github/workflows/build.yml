@@ -1,0 +1,26 @@
+name: Build PS3 PKG
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: dborth/ps3dev:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build PKG
+        run: |
+          make
+
+      - name: Upload PKG Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Franko_PS3_PKG
+          path: "*.pkg"
