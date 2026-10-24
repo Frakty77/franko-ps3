@@ -7,29 +7,22 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install PS3Dev Toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential autoconf automake bison flex libelf-dev libtool make patch python3 pkg-config
-          wget https://github.com/ps3dev/ps3toolchain/releases/download/v1.0.0/ps3dev-ubuntu-latest.tar.gz -O ps3dev.tar.gz || true
-          # Tworzenie katalogu i wypakowanie
-          sudo mkdir -p /usr/local/ps3dev
-          if [ -f ps3dev.tar.gz ]; then
-            sudo tar -xzf ps3dev.tar.gz -C /usr/local/ps3dev
-          fi
+      - name: Setup PS3Dev
+        uses: ps3dev/setup-ps3dev@v1
 
       - name: Build PKG
         run: |
-          export PS3DEV=/usr/local/ps3dev
-          export PSL1GHT=$PS3DEV/psl1ght
-          export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
           make
+        env:
+          PS3DEV: /usr/local/ps3dev
+          PSL1GHT: /usr/local/ps3dev/psl1ght
+          PATH: /usr/local/ps3dev/bin:/usr/local/ps3dev/ppu/bin:/usr/local/ps3dev/spu/bin:${{ env.PATH }}
 
       - name: Upload PKG Artifact
         uses: actions/upload-artifact@v4
