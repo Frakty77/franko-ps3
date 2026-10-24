@@ -13,29 +13,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Dependencies & Download Ready Toolchain
+      - name: Increase Swap Space (Fix OOM Crash)
+        run: |
+          echo "=== Zwiększanie przestrzeni Swap, aby GCC nie zepsuło się z braku pamięci ==="
+          sudo swapoff -a
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
+      - name: Install Dependencies & Build Toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev
+          sudo apt-get install -y build-essential autoconf automake bison flex libelf-dev libtool make patch python3 pkg-config zlib1g-dev libgmp-dev libmpfr-dev libmpc-dev libssl-dev git wget curl unzip
 
-          # Tworzenie katalogu docelowego
           sudo mkdir -p /usr/local/ps3dev
           sudo chmod 777 /usr/local/ps3dev
 
-          echo "=== Pobieranie gotowego zestawu narzędzi PS3Dev ==="
-          # Pobieramy stabilny zestaw bezpośrednio z oficjalnego repozytorium lub mirrora
-          cd /tmp
-          wget https://github.com/ps3dev/ps3toolchain/releases/download/v1.0.0/ps3dev-ubuntu-latest.tar.gz -O ps3dev.tar.gz || true
+          git clone --depth 1 https://github.com/ps3dev/ps3toolchain.git /tmp/ps3toolchain
+          cd /tmp/ps3toolchain
           
-          if [ -f ps3dev.tar.gz ] && [ -s ps3dev.tar.gz ]; then
-            tar -xzf ps3dev.tar.gz -C /usr/local/ps3dev
-          else
-            echo "Archiwum nie pobrało się bezpośrednio, klonujemy minimalne repozytorium..."
-            git clone --depth 1 https://github.com/ps3dev/ps3toolchain.git /tmp/ps3toolchain
-            cd /tmp/ps3toolchain
-            # Wskazujemy instalację tylko niezbędnych komponentów bez pełnego GCC
-            ./toolchain.sh minimal || true
-          fi
+          export PS3DEV=/usr/local/ps3dev
+          export PSL1GHT=$PS3DEV/psl1ght
+          export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
+          
+          # Teraz kompilacja ma wystarczająco dużo pamięci, by dojść do końca
+          ./toolchain.sh
 
       - name: Build PKG
         run: |
@@ -43,9 +47,7 @@ jobs:
           export PSL1GHT=$PS3DEV/psl1ght
           export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
           
-          echo "=== Sprawdzanie dostępności kompilatora ==="
-          powerpc-eabi-g++ --version || echo "Ostrzeżenie: kompilator niedostępny"
-
+          echo "=== Kompilacja gry Franko PS3 ==="
           make
 
       - name: Upload PKG Artifact
