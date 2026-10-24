@@ -8,48 +8,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/ps3dev/ps3dev:latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install System Dependencies
+      - name: Verify Environment & Build
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential python3 python3-pip wget curl git libelf-dev zlib1g-dev libgmp-dev libmpfr-dev libmpc-dev
+          echo "=== Sprawdzanie gotowego środowiska w kontenerze ==="
+          which powerpc-eabi-g++
+          powerpc-eabi-g++ --version
 
-      - name: Setup PS3 Environment via Community Script
-        run: |
-          sudo mkdir -p /usr/local/ps3dev
-          sudo chmod 777 /usr/local/ps3dev
-
-          # Pobieramy najnowsze narzędzia przez oficjalne repozytorium z pominięciem pełnego GCC, 
-          # instalując prekompilowane binaria dla PPU/SPU jeśli są dostępne
-          cd /tmp
-          git clone --depth 1 https://github.com/ps3dev/ps3toolchain.git
-          cd ps3toolchain
-          
-          export PS3DEV=/usr/local/ps3dev
-          export PSL1GHT=$PS3DEV/psl1ght
-          export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
-          
-          # Uruchamiamy skrypt budujący tylko niezbędne minimum
-          ./toolchain.sh || echo "Toolchain finished with warnings"
-
-      - name: Verify Compiler & Build PKG
-        run: |
-          export PS3DEV=/usr/local/ps3dev
-          export PSL1GHT=$PS3DEV/psl1ght
-          export PATH=$PATH:$PS3DEV/bin:$PS3DEV/ppu/bin:$PS3DEV/spu/bin
-          
-          echo "=== Sprawdzamy czy kompilator istnieje ==="
-          if command -v powerpc-eabi-g++ &> /dev/null; then
-              echo "Kompilator znaleziony!"
-              powerpc-eabi-g++ --version
-          else
-              echo "OSTRZEŻENIE: Brak natywnego kompilatora w PATH. Próbujemy wskazać alternatywę."
-          fi
-          
+          echo "=== Kompilacja gry Franko PS3 ==="
           make
 
       - name: Upload PKG Artifact
